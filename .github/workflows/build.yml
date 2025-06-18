@@ -12,35 +12,40 @@ jobs:
       # Step 1: Checkout code
       - uses: actions/checkout@v4
 
-      # Step 2: Fix libtinfo5 issue (Ubuntu 24.04+)
-      - name: Fix libtinfo5 missing error
+      # Step 2: Fix libtinfo5 missing issue (Ubuntu 22+)
+      - name: Install required packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y libtinfo6
+          sudo apt-get install -y libtinfo6 libffi-dev libssl-dev zlib1g-dev \
+            libncurses5 libsqlite3-dev unzip zip ccache openjdk-17-jdk
           sudo ln -sf /lib/x86_64-linux-gnu/libtinfo.so.6 /lib/x86_64-linux-gnu/libtinfo.so.5 || true
 
-      # Step 3: Cache buildozer dependencies to speed up builds
-      - name: Cache Buildozer dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.buildozer
-            ~/.gradle
-            ~/.cache/pip
-          key: ${{ runner.os }}-buildozer-${{ hashFiles('**/buildozer.spec') }}
-          restore-keys: |
-            ${{ runner.os }}-buildozer-
+      # Step 3: Clean .buildozer (avoids cache corruption)
+      - name: Clean .buildozer directory
+        run: rm -rf ~/.buildozer
 
-      # Step 4: Build APK using Buildozer
+      # Step 4: Cache Buildozer dependencies (optional, can enable after it works)
+      # - name: Cache Buildozer dependencies
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ~/.buildozer
+      #       ~/.gradle
+      #       ~/.cache/pip
+      #     key: ${{ runner.os }}-buildozer-${{ hashFiles('**/buildozer.spec') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-buildozer-
+
+      # Step 5: Build APK with Buildozer
       - name: Build APK
         uses: digreatbrian/buildozer-action@v2
         with:
           python-version: 3.8
           buildozer-cmd: buildozer -v android debug
 
-      # Step 5: Upload APK as an artifact
+      # Step 6: Upload APK as artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: BiometricFingerprint-APK
+          name: StudentDetailsApp-APK
           path: ./bin/*.apk
