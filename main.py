@@ -7,7 +7,8 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 import sqlite3
 from kivymd.uix.datatables import MDDataTable
 from kivy.metrics import dp
-import pandas as pd
+import csv
+import os
 from kivymd.uix.pickers import MDDatePicker
 
 
@@ -98,13 +99,28 @@ def get_all_payments():
 def export_data():
     try:
         conn = sqlite3.connect("students.db")
-        students_df = pd.read_sql_query("SELECT * FROM students", conn)
-        payments_df = pd.read_sql_query("SELECT * FROM payments", conn)
+        cursor = conn.cursor()
 
-        students_df.to_excel("students.xlsx", index=False)
-        payments_df.to_excel("payments.xlsx", index=False)
+        # Export students
+        cursor.execute("SELECT * FROM students")
+        students = cursor.fetchall()
+        student_columns = [column[0] for column in cursor.description]
+        with open("students.csv", "w", newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(student_columns)
+            writer.writerows(students)
+
+        # Export payments
+        cursor.execute("SELECT p.payment_id, p.student_id, s.name, s.aadhaar, p.amount_paid, p.payment_date FROM payments p JOIN students s ON p.student_id = s.id")
+        payments = cursor.fetchall()
+        payment_columns = ["payment_id", "student_id", "name", "aadhaar", "amount_paid", "payment_date"]
+        with open("payments.csv", "w", newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(payment_columns)
+            writer.writerows(payments)
+
         conn.close()
-        return "Exported to students.xlsx and payments.xlsx successfully!"
+        return "Exported to students.csv and payments.csv successfully!"
     except Exception as e:
         return f"Export failed: {str(e)}"
 
