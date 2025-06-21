@@ -2,45 +2,42 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    name: Build APK
+    runs-on: ubuntu-20.04
 
     steps:
-      # Step 1: Checkout code
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-      # Step 2: Fix libtinfo5 missing error for Ubuntu 24.04+
-      - name: Fix libtinfo5 missing error
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install system dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libtinfo6
-          sudo ln -sf /lib/x86_64-linux-gnu/libtinfo.so.6 /lib/x86_64-linux-gnu/libtinfo.so.5 || true
+          sudo apt update
+          sudo apt install -y python3-pip python3-setuptools git zip unzip \
+            openjdk-11-jdk libncurses5 libstdc++6 libffi-dev \
+            libssl-dev curl libsqlite3-dev libbz2-dev libreadline-dev
 
-      # Step 3: Cache Buildozer dependencies
-      - name: Cache Buildozer dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.buildozer
-            ~/.gradle
-            ~/.cache/pip
-          key: ${{ runner.os }}-buildozer-${{ hashFiles('**/buildozer.spec') }}
-          restore-keys: |
-            ${{ runner.os }}-buildozer-
+      - name: Install Buildozer and dependencies
+        run: |
+          pip install --upgrade pip
+          pip install cython
+          pip install buildozer
 
-      # Step 4: Build APK using Buildozer
       - name: Build APK
-        uses: digreatbrian/buildozer-action@v2
-        with:
-          python-version: 3.8
-          buildozer-cmd: buildozer -v android debug
+        run: |
+          buildozer android debug
 
-      # Step 5: Upload APK as an artifact
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: StudentApp-APK
-          path: ./bin/*.apk
+          name: student-app-apk
+          path: bin/*.apk
