@@ -10,6 +10,13 @@ from kivy.metrics import dp
 import csv
 import os
 from kivymd.uix.pickers import MDDatePicker
+from android.storage import app_storage_path
+from os.path import join
+
+
+def get_export_path(filename):
+    app_path = app_storage_path()
+    return join(app_path, filename)
 
 
 
@@ -105,7 +112,7 @@ def export_data():
         cursor.execute("SELECT * FROM students")
         students = cursor.fetchall()
         student_columns = [column[0] for column in cursor.description]
-        with open("students.csv", "w", newline='', encoding='utf-8') as f:
+        with open(get_export_path("students.csv"), "w", newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(student_columns)
             writer.writerows(students)
@@ -114,7 +121,7 @@ def export_data():
         cursor.execute("SELECT p.payment_id, p.student_id, s.name, s.aadhaar, p.amount_paid, p.payment_date FROM payments p JOIN students s ON p.student_id = s.id")
         payments = cursor.fetchall()
         payment_columns = ["payment_id", "student_id", "name", "aadhaar", "amount_paid", "payment_date"]
-        with open("payments.csv", "w", newline='', encoding='utf-8') as f:
+        with open(get_export_path("payments.csv"), "w", newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(payment_columns)
             writer.writerows(payments)
