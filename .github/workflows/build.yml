@@ -57,9 +57,9 @@ jobs:
     - name: Set environment variables
       run: |
         echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
-        echo "PATH=$PATH:~/.local/bin" >> $GITHUB_ENV
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - name: Initialize Buildozer (if needed)
+    - name: Initialize Buildozer (if not already)
       run: |
         if [ ! -f "buildozer.spec" ]; then
           buildozer init
@@ -74,7 +74,7 @@ jobs:
         )
 
     - name: Upload APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: studentdetailsapp-debug-apk
         path: bin/*.apk
