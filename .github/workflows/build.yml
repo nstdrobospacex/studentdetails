@@ -17,18 +17,22 @@ jobs:
       with:
         python-version: '3.8'
 
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
-        sudo apt update
-        sudo apt install -y git zip unzip openjdk-11-jdk python3-pip libsdl2-dev libsdl2-image-dev \
-          libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev \
-          libfreetype6-dev libgl1-mesa-dev libgles2-mesa-dev libgstreamer1.0 libgstreamer1.0-dev \
-          libmtdev-dev xclip xsel libjpeg-dev zlib1g-dev pkg-config libffi-dev libssl-dev
+        sudo apt-get update
+        sudo apt-get install -y \
+          git zip unzip openjdk-11-jdk python3-pip \
+          libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+          libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev \
+          libfreetype6-dev libgl1-mesa-dev libgles2-mesa-dev \
+          libgstreamer1.0-0 libgstreamer-plugins-base1.0-dev \
+          libmtdev-dev xclip xsel libjpeg-dev zlib1g-dev \
+          pkg-config libffi-dev libssl-dev
 
         pip install --upgrade pip
         pip install cython virtualenv buildozer
 
-    - name: Initialize buildozer
+    - name: Initialize buildozer (only if missing)
       run: |
         if [ ! -f buildozer.spec ]; then
           buildozer init
