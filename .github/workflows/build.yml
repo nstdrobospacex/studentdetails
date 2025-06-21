@@ -1,46 +1,79 @@
-name: Build Android APK
+name: Build Kivy Android App
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    name: Build with Buildozer
+    runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout code
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      # Step 2: Fix libtinfo5 issue (Ubuntu 24.04+)
-      - name: Fix libtinfo5 missing error
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Buildozer Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libtinfo6
-          sudo ln -sf /lib/x86_64-linux-gnu/libtinfo.so.6 /lib/x86_64-linux-gnu/libtinfo.so.5 || true
+          sudo apt update
+          sudo apt install -y \
+            python3-pip \
+            build-essential \
+            git \
+            zip \
+            unzip \
+            openjdk-17-jdk \
+            libncurses5 \
+            libffi-dev \
+            libssl-dev \
+            libsqlite3-dev \
+            zlib1g-dev \
+            libjpeg-dev \
+            libfreetype6-dev \
+            liblcms2-dev \
+            libblas-dev \
+            liblapack-dev \
+            libgl1-mesa-dev \
+            libgles2-mesa-dev \
+            libgstreamer1.0 \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-plugins-ugly \
+            gstreamer1.0-libav \
+            libmtdev-dev \
+            libglfw3 \
+            libglfw3-dev \
+            libudev-dev \
+            libsdl2-dev \
+            libsdl2-image-dev \
+            libsdl2-mixer-dev \
+            libsdl2-ttf-dev
 
-      # Step 3: Cache buildozer dependencies to speed up builds
-      - name: Cache Buildozer dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.buildozer
-            ~/.gradle
-            ~/.cache/pip
-          key: ${{ runner.os }}-buildozer-${{ hashFiles('**/buildozer.spec') }}
-          restore-keys: |
-            ${{ runner.os }}-buildozer-
+          pip install --upgrade Cython pip virtualenv
+          pip install buildozer
 
-      # Step 4: Build APK using Buildozer
+      - name: Initialize Buildozer
+        run: |
+          buildozer init
+
+      - name: Replace buildozer.spec (if needed)
+        run: |
+          cp your_buildozer.spec buildozer.spec
+
       - name: Build APK
-        uses: digreatbrian/buildozer-action@v2
-        with:
-          python-version: 3.8
-          buildozer-cmd: buildozer -v android debug
+        run: |
+          buildozer android debug
 
-      # Step 5: Upload APK as an artifact
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: StudentsDetails-APK
-          path: ./bin/*.apk
+          name: student-app-debug-apk
+          path: bin/*.apk
