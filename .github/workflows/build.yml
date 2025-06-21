@@ -3,46 +3,78 @@ name: Build Android APK
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-22.04
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
     - name: Set up Python 3.10
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
         python-version: '3.10'
 
-    - name: Install essential build dependencies
+    - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          zip unzip openjdk-11-jdk \
-          python3-pip libffi-dev libssl-dev \
-          libgl1-mesa-dev libgles2-mesa-dev \
-          libncurses5 git
+        sudo apt update
+        sudo apt install -y \
+          python3-pip \
+          zip \
+          unzip \
+          openjdk-11-jdk \
+          libsdl2-dev \
+          libsdl2-image-dev \
+          libsdl2-mixer-dev \
+          libsdl2-ttf-dev \
+          libportmidi-dev \
+          libswscale-dev \
+          libavformat-dev \
+          libavcodec-dev \
+          zlib1g-dev \
+          libgstreamer-plugins-base1.0-dev \
+          libmtdev-dev \
+          libgl1-mesa-dev \
+          libgles2-mesa-dev \
+          libgstreamer1.0-0 \
+          libgstreamer1.0-dev \
+          libffi-dev \
+          libjpeg-dev \
+          libfreetype6-dev \
+          build-essential \
+          autoconf \
+          libtool \
+          pkg-config \
+          git
 
-    - name: Install Buildozer
-      run: |
         python3 -m pip install --upgrade pip
-        pip install cython
+        pip install --upgrade Cython virtualenv
         pip install buildozer
 
-    - name: Create buildozer.spec if missing
+    - name: Set environment variables
       run: |
-        if [ ! -f buildozer.spec ]; then
+        echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
+        echo "PATH=$PATH:~/.local/bin" >> $GITHUB_ENV
+
+    - name: Initialize Buildozer (if needed)
+      run: |
+        if [ ! -f "buildozer.spec" ]; then
           buildozer init
         fi
 
     - name: Build APK
-      run: buildozer android debug
+      run: |
+        buildozer -v android debug || (
+          echo "🔍 Buildozer log:" && 
+          cat .buildozer/android/platform/python-for-android/python-for-android.log && 
+          exit 1
+        )
 
     - name: Upload APK
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
-        name: studentdetails-debug-apk
+        name: studentdetailsapp-debug-apk
         path: bin/*.apk
